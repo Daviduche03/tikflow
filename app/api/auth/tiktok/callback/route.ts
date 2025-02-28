@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+export const dynamic = 'force-dynamic'; // Prevent static generation
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -9,20 +11,23 @@ export async function GET(request: Request) {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
     
+    // Base URL for redirects
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
     // Verify CSRF state
     const storedState = cookies().get('csrfState')?.value;
     if (!storedState || storedState !== state) {
       console.error('State mismatch - possible CSRF attack');
-      return NextResponse.redirect('/login?error=invalid_state');
+      return NextResponse.redirect(`${baseUrl}/login?error=invalid_state`);
     }
 
     if (error) {
       console.error('TikTok auth error:', error, errorDescription);
-      return NextResponse.redirect(`/login?error=${error}&description=${errorDescription}`);
+      return NextResponse.redirect(`${baseUrl}/login?error=${error}&description=${errorDescription}`);
     }
 
     if (!code) {
-      return NextResponse.redirect('/login?error=no_code');
+      return NextResponse.redirect(`${baseUrl}/login?error=no_code`);
     }
 
     const formData = new URLSearchParams({
@@ -47,7 +52,7 @@ export async function GET(request: Request) {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', data);
-      return NextResponse.redirect('/login?error=token_exchange_failed');
+      return NextResponse.redirect(`${baseUrl}/login?error=token_exchange_failed`);
     }
 
     // Clear CSRF state cookie
@@ -61,9 +66,10 @@ export async function GET(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
 
-    return NextResponse.redirect('/dashboard');
+    return NextResponse.redirect(`${baseUrl}/dashboard`);
   } catch (error) {
     console.error('Callback error:', error);
-    return NextResponse.redirect('/login?error=server_error');
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    return NextResponse.redirect(`${baseUrl}/login?error=server_error`);
   }
 }
