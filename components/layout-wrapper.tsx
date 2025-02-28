@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/sidebar';
 
-const noSidebarRoutes = ['/privacy', '/terms'];
+const noSidebarRoutes = ['/privacy', '/terms', "/login", "/signup"];
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
