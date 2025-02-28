@@ -21,13 +21,31 @@ export async function signOut() {
   return { error };
 }
 
-export async function connectTikTok() {
-  // TikTok OAuth URL - Replace with your actual TikTok Developer App credentials
-  const TIKTOK_CLIENT_ID = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_ID;
-  const REDIRECT_URI = encodeURIComponent(`${window.location.origin}/auth/tiktok/callback`);
-  const SCOPE = 'user.info.basic,video.list';
+export const connectTikTok = () => {
+  const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_ID;
+  const redirectUri = process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI;
   
-  const authUrl = `https://www.tiktok.com/auth/authorize?client_key=${TIKTOK_CLIENT_ID}&response_type=code&scope=${SCOPE}&redirect_uri=${REDIRECT_URI}&state=${Math.random().toString(36).substring(7)}`;
+  if (!clientKey || !redirectUri) {
+    console.error('Missing TikTok configuration:', { clientKey: !!clientKey, redirectUri: !!redirectUri });
+    return;
+  }
+
+  const scope = 'user.info.basic,video.list,video.upload';
+  const csrfState = Math.random().toString(36).substring(7);
   
-  window.location.href = authUrl;
-}
+  // Store the CSRF state in a cookie
+  document.cookie = `csrfState=${csrfState}; path=/; max-age=3600; secure; samesite=lax`;
+
+  const authUrl = 'https://www.tiktok.com/v2/auth/authorize/';
+  const params = new URLSearchParams({
+    client_key: clientKey,
+    scope: scope,
+    response_type: 'code',
+    redirect_uri: redirectUri,
+    state: csrfState
+  });
+
+  const finalUrl = `${authUrl}?${params.toString()}`;
+  console.log('Authorization URL:', finalUrl); // For debugging
+  window.location.href = finalUrl;
+};

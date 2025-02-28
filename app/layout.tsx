@@ -1,9 +1,9 @@
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Sidebar } from "@/components/sidebar";
 import { AuthProvider } from "@/lib/auth-context";
 import { AuthGuard } from "@/components/auth-guard";
 import { Toaster } from "sonner";
+import { LayoutWrapper } from "@/components/layout-wrapper";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,12 +24,9 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AuthGuard>
-              <div>
-                <Sidebar />
-                <main className="lg:pl-72">
-                  {children}
-                </main>
-              </div>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
             </AuthGuard>
           </AuthProvider>
           <Toaster richColors position="top-center" />
