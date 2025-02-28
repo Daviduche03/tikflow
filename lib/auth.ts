@@ -30,7 +30,7 @@ export const connectTikTok = () => {
     return;
   }
 
-  const scope = 'user.info.basic,video.list,video.upload';
+  const scope = 'user.info.basic';
   const csrfState = Math.random().toString(36).substring(7);
   
   // Store the CSRF state in a cookie
