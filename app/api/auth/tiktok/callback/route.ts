@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
 
-    return NextResponse.redirect(`${baseUrl}/dashboard`);
+    return NextResponse.redirect(`${baseUrl}`);
   } catch (error) {
     console.error('Callback error:', error);
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
