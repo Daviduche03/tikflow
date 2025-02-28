@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = 'force-dynamic'; // Prevent static generation
 
@@ -53,6 +54,51 @@ export async function GET(request: Request) {
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', data);
       return NextResponse.redirect(`${baseUrl}/login?error=token_exchange_failed`);
+    }
+
+    // Fetch user info with required fields
+    const userInfoResponse = await fetch('https://open.tiktokapis.com/v2/user/info/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${data.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: [
+          'open_id',
+          'display_name',
+          'avatar_url',
+          'follower_count',
+          'following_count',
+          'likes_count',
+          'video_count'
+        ]
+      })
+    });
+
+    const userInfo = await userInfoResponse.json();
+    
+    if (!userInfoResponse.ok) {
+      console.error('Failed to fetch user info:', userInfo);
+      return NextResponse.redirect(`${baseUrl}/login?error=user_info_failed`);
+    }
+
+    // Save user info to database
+    const { error: dbError } = await supabase
+      .from('tiktok_accounts')
+      .upsert({
+        tiktok_user_id: userInfo.data.user.open_id,
+        username: userInfo.data.user.display_name,
+        avatar_url: userInfo.data.user.avatar_url,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: new Date(Date.now() + data.expires_in * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return NextResponse.redirect(`${baseUrl}/login?error=database_error`);
     }
 
     // Clear CSRF state cookie

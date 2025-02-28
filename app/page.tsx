@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Activity, TrendingUp, Video, Users, Search, MoreVertical, PlayCircle } from "lucide-react";
 import Link from "next/link";
+import { useTikTokData } from "@/lib/hooks/useTikTokData";
 
 const analyticsData = [
   { date: "Jan 1", views: 4000, engagement: 2400 },
@@ -15,33 +16,6 @@ const analyticsData = [
   { date: "Jan 29", views: 8890, engagement: 4800 },
   { date: "Feb 5", views: 9390, engagement: 3800 },
   { date: "Feb 12", views: 11400, engagement: 4300 }
-];
-
-const metrics = [
-  { 
-    title: "Total Views", 
-    value: "2.4M", 
-    change: "+23%",
-    icon: Activity
-  },
-  { 
-    title: "Followers", 
-    value: "45.2K", 
-    change: "+8%",
-    icon: Users
-  },
-  { 
-    title: "Engagement", 
-    value: "5.2%", 
-    change: "+2%",
-    icon: TrendingUp
-  },
-  { 
-    title: "Videos", 
-    value: "156", 
-    change: "+12%",
-    icon: Video
-  }
 ];
 
 const recentPosts = [
@@ -109,6 +83,35 @@ const chartDefaults = {
 };
 
 export default function Dashboard() {
+  const { data: tikTokData, loading, error } = useTikTokData();
+
+  const metrics = [
+    { 
+      title: "Followers", 
+      value: tikTokData ? `${(tikTokData.metrics.followers / 1000).toFixed(1)}K` : '...',
+      change: "+8%", // Note: Historical data not available in basic API
+      icon: Users
+    },
+    { 
+      title: "Following", 
+      value: tikTokData ? tikTokData.metrics.following.toLocaleString() : '...',
+      change: "+2%",
+      icon: Activity
+    },
+    { 
+      title: "Total Likes", 
+      value: tikTokData ? `${(tikTokData.metrics.likes / 1000).toFixed(1)}K` : '...',
+      change: "+23%",
+      icon: TrendingUp
+    },
+    { 
+      title: "Videos", 
+      value: tikTokData ? tikTokData.metrics.videos.toString() : '...',
+      change: "+12%",
+      icon: Video
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
@@ -159,6 +162,12 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-6 py-8">
+        {error ? (
+          <Card className="p-6 bg-red-500/10 border-red-500/20 mb-8">
+            <p className="text-red-500">Failed to load TikTok data. Please reconnect your account.</p>
+          </Card>
+        ) : null}
+
         {/* Metrics */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           {metrics.map((metric) => (
@@ -166,12 +175,20 @@ export default function Dashboard() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <metric.icon className="h-5 w-5 text-zinc-400" />
-                  <span className={`text-sm font-medium ${metric.change.startsWith('+') ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {metric.change}
-                  </span>
+                  {!loading && (
+                    <span className={`text-sm font-medium ${metric.change.startsWith('+') ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {metric.change}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-zinc-400">{metric.title}</p>
-                <p className="text-3xl font-bold mt-1 tracking-tight">{metric.value}</p>
+                <p className="text-3xl font-bold mt-1 tracking-tight">
+                  {loading ? (
+                    <span className="animate-pulse">...</span>
+                  ) : (
+                    metric.value
+                  )}
+                </p>
               </div>
             </Card>
           ))}
