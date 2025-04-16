@@ -78,6 +78,7 @@ export async function GET(request: Request) {
 
     const userInfo = await userInfoResponse.json();
     
+    
     if (!userInfoResponse.ok) {
       console.error('Failed to fetch user info:', userInfo);
       return NextResponse.redirect(`${baseUrl}/login?error=user_info_failed`);
